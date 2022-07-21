@@ -1,0 +1,99 @@
+---
+date: '2022-07-20'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,results='asis',echo=FALSE,fig.height=3}
+cat("\\begin{center}
+    \\large{\\textbf{Câmbio - Dólar Americano - ",dados.finais$max_mes_nome,"/",dados.finais$max_ano,"}} \\\\
+    \\end{center}",sep="")
+```
+
+```{r,ACOMPANHA DÓLAR AMERICANO,echo=FALSE}
+usd_moeda <- dados.finais$base_cambio_final %>% 
+  filter(no_pais == "ESTADOS UNIDOS") %>% 
+  select(co_data,tx_compra,tx_venda) %>% 
+  gather("tp_taxa","vl_taxa",tx_compra:tx_venda) %>% 
+  mutate(co_data = ymd(co_data),
+         vl_taxa = str_pad(round(as.numeric(vl_taxa),4),6,"right","0"))
+
+ggplot(data = usd_moeda,mapping = aes(x = co_data,y = vl_taxa,
+                                      color=factor(tp_taxa),
+                                      group=factor(tp_taxa),
+                                      shape=factor(tp_taxa))) +
+  scale_x_date(breaks = seq.Date(from = min(usd_moeda$co_data),
+                                    to = max(usd_moeda$co_data),
+                                    by = 1)) +
+  scale_color_manual(labels = c("compra","venda"),values = c("red","blue")) +
+  scale_shape_manual(labels = c("compra","venda"),values = c(17,19)) +
+  labs(caption = "fonte: Banco Central - ptax") +
+  geom_point(size=2) +
+  geom_line(size=1.25) +
+  theme_minimal() +
+  theme(legend.title = element_blank(),
+        legend.position = "top",
+        legend.direction = "horizontal",
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.text.x = element_text(angle = 45,vjust=1,hjust = 1,face = "bold",size=8),
+        panel.grid.major = element_line(size = .5,colour = "gray"),
+        panel.grid.minor = element_blank(),
+        panel.border = element_rect(fill = "NA",size = 1.5),
+        axis.text.y = element_text(face = "bold",size=8),
+        legend.text = element_text(face = "bold"),
+        plot.caption = element_text(face = "bold"))
+
+```
+
+\newpage
+
+```{r,results='asis',echo=FALSE,fig.height=3}
+cat("\\begin{center}
+    \\large{\\textbf{Paridade - Principais Moedas x Dólar Americano - ",dados.finais$max_mes_nome,"/",dados.finais$max_ano,"}} \\\\
+    \\end{center}",sep="")
+```
+
+```{r,PARIDADE DÓLAR CONTRA PRINCIPAIS MOEDAS,echo=FALSE}
+moedas <- c("IENE","RENMINBI CHINES","RANDE/AFRICA SUL","EURO","LIBRA ESTERLINA","RUPIA/INDIA")
+
+paridade_moeda <- dados.finais$base_cambio_final %>% 
+  filter(no_moeda %in% moedas) %>%  
+  select(co_data,no_moeda,paridade_compra,paridade_venda) %>% 
+  distinct() %>% 
+  gather("tp_paridade","vl_paridade",paridade_compra:paridade_venda) %>% 
+  mutate(vl_paridade = round(as.numeric(vl_paridade),4)) 
+
+plot <- ggplot(data = paridade_moeda,mapping = aes(x = co_data,y = vl_paridade,
+                                           group=factor(tp_paridade),
+                                           colour=factor(tp_paridade),
+                                           shape=factor(tp_paridade))) +
+  geom_point() +
+  geom_line() +
+  scale_x_date(breaks = seq.Date(min(paridade_moeda$co_data),max(paridade_moeda$co_data),2)) +
+  scale_color_manual(labels = c("compra","venda"),values = c("red","blue")) +
+  scale_shape_manual(labels = c("compra","venda"),values = c(19,17)) + 
+  facet_wrap(.~no_moeda,scales = "free_y") +
+  theme_minimal() +
+  theme(legend.title = element_blank(),
+        axis.title.x = element_blank(),
+      axis.title.y = element_blank(),
+      legend.position = "top",
+      legend.direction = "horizontal",
+      axis.text.x = element_text(angle = 45,vjust=1,hjust = 1,face = "bold",size=10),
+      panel.grid.minor = element_blank(),
+      panel.grid.major = element_line(size=.3,color="grey"),
+      panel.border = element_rect(fill = NA),
+      strip.text = element_text(face = "bold"),
+      legend.text = element_text(face = "bold"),
+      axis.text.y = element_text(face = "bold",size=10)) 
+
+plot +
+  labs(caption = "fonte: Bance Central - Ptax") +
+  theme(plot.caption = element_text(face = "bold"))
+
+```
+
